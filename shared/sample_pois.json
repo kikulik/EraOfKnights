@@ -1,0 +1,25 @@
+{
+  "pois": [
+    {
+      "id": "golden-gate",
+      "name": "Golden Gate Rift",
+      "lat": 37.8199,
+      "lon": -122.4783,
+      "seed": 1001
+    },
+    {
+      "id": "downtown",
+      "name": "Downtown Nexus",
+      "lat": 37.7749,
+      "lon": -122.4194,
+      "seed": 1002
+    },
+    {
+      "id": "oakland",
+      "name": "Oakland Breach",
+      "lat": 37.8044,
+      "lon": -122.2711,
+      "seed": 1003
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Worldrift Messages",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "enter_poi": {
+      "type": "object",
+      "required": ["poiId", "lat", "lon"],
+      "properties": {
+        "poiId": { "type": "string" },
+        "lat": { "type": "number" },
+        "lon": { "type": "number" }
+      }
+    },
+    "chat": {
+      "type": "string"
+    }
+  }
+}
