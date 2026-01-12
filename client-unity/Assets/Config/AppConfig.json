@@ -1,0 +1,9 @@
+{
+  "serverEndpoint": "ws://localhost:2567",
+  "gpsRequired": true,
+  "simulatedGpsEnabled": false,
+  "simulatedGpsLat": 37.7749,
+  "simulatedGpsLon": -122.4194,
+  "poiEnterRadiusMeters": 150,
+  "tickRate": 30
+}

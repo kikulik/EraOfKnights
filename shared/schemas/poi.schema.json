@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "POI List",
+  "type": "object",
+  "properties": {
+    "pois": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "lat", "lon", "seed"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "lat": { "type": "number" },
+          "lon": { "type": "number" },
+          "seed": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "required": ["pois"]
+}
