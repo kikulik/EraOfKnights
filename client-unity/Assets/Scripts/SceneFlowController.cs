@@ -10,19 +10,8 @@ namespace Worldrift.Client
         public const string WorldScene = "World";
         public const string InstanceScene = "Instance";
 
-        public void GoToConnect()
-        {
-            SceneManager.LoadScene(ConnectScene);
-        }
-
-        public void GoToWorld()
-        {
-            SceneManager.LoadScene(WorldScene);
-        }
-
-        public void GoToInstance()
-        {
-            SceneManager.LoadScene(InstanceScene);
-        }
+        public void GoToConnect()  => SceneManager.LoadScene(ConnectScene, LoadSceneMode.Single);
+        public void GoToWorld()    => SceneManager.LoadScene(WorldScene, LoadSceneMode.Single);
+        public void GoToInstance() => SceneManager.LoadScene(InstanceScene, LoadSceneMode.Single);
     }
 }

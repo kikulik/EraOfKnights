@@ -2,16 +2,19 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1045 &1
 EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/Boot.unity
-    guid: 00000000000000000000000000000000
+    guid: 21fd1636b63e66d448ba329381d5940b
   - enabled: 1
     path: Assets/Scenes/Connect.unity
-    guid: 00000000000000000000000000000000
+    guid: e50242087ec4b844fbc0f9b78e11f921
   - enabled: 1
     path: Assets/Scenes/World.unity
-    guid: 00000000000000000000000000000000
+    guid: ba5bb9e135690ef47b1c0885362131cf
   - enabled: 1
     path: Assets/Scenes/Instance.unity
-    guid: 00000000000000000000000000000000
+    guid: 6dfe4224487868740ae881fa10e12f0c
+  m_configObjects: {}

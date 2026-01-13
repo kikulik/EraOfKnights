@@ -40,23 +40,20 @@ namespace Worldrift.Client
 
         private void OnLocationUpdated(GpsLocation location)
         {
-            // Prevent repeatedly loading the Connect scene on every GPS update.
+            // Update UI so we can see GPS values in Editor (simulated GPS).
+            uiController.SetStatus($"GPS: {location.Latitude}, {location.Longitude}");
+
+            // Only transition once.
             if (hasLoadedConnect)
             {
                 return;
             }
 
-            if (!config.gpsRequired)
+            if (!config.gpsRequired || location.Latitude != 0 || location.Longitude != 0)
             {
+                Debug.Log($"[BOOT] Got GPS {location.Latitude},{location.Longitude} -> loading Connect");
                 hasLoadedConnect = true;
-                sceneFlow.GoToConnect();
-                return;
-            }
-
-            if (location.Latitude != 0 || location.Longitude != 0)
-            {
-                hasLoadedConnect = true;
-                sceneFlow.GoToConnect();
+                // sceneFlow.GoToConnect();
             }
         }
     }

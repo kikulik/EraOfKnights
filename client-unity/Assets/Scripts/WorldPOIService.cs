@@ -27,6 +27,16 @@ namespace Worldrift.Client
 
         public void LoadPOIs()
         {
+            // 1) Prefer Resources (works in builds)
+            var text = Resources.Load<TextAsset>("sample_pois"); // file must be Assets/Resources/sample_pois.json
+            if (text != null && !string.IsNullOrWhiteSpace(text.text))
+            {
+                // Your JSON is { "pois": [...] } so parse into POIList wrapper
+                LoadedPOIs = JsonUtility.FromJson<POIList>(text.text) ?? new POIList();
+                return;
+            }
+
+            // 2) Fallback to repo shared path (Editor convenience)
             var sharedPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "shared", "sample_pois.json"));
             if (File.Exists(sharedPath))
             {
@@ -35,6 +45,7 @@ namespace Worldrift.Client
                 return;
             }
 
+            // 3) Final fallback
             Debug.LogWarning("sample_pois.json not found, loading fallback POIs.");
             LoadedPOIs = new POIList
             {
@@ -44,6 +55,7 @@ namespace Worldrift.Client
                 }
             };
         }
+
 
         public List<POI> GetNearest(double lat, double lon, int max = 5)
         {
