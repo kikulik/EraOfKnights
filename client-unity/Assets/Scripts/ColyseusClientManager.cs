@@ -15,8 +15,17 @@ namespace Worldrift.Client
         private ColyseusRoom<State.RiftState> room;
         private AppConfig config;
 
+        private static ColyseusClientManager _instance;
+
         private void Awake()
         {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            _instance = this;
             DontDestroyOnLoad(gameObject);
         }
 
