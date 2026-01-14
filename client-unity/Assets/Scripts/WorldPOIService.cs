@@ -25,28 +25,39 @@ namespace Worldrift.Client
     {
         public POIList LoadedPOIs { get; private set; } = new POIList();
 
+        [Header("Optional: override shared path for debugging")]
+        [SerializeField] private string overrideSharedPath = "";
+
+        // Resources path WITHOUT extension:
+        private const string ResourcesPoisPath = "sample_pois"; // -> Assets/Resources/sample_pois.json
+
         public void LoadPOIs()
         {
-            // 1) Prefer Resources (works in builds)
-            var text = Resources.Load<TextAsset>("sample_pois"); // file must be Assets/Resources/sample_pois.json
-            if (text != null && !string.IsNullOrWhiteSpace(text.text))
+            // 1) Repo /shared path (same level as Assets folder) OR override path
+            string sharedPath = string.IsNullOrWhiteSpace(overrideSharedPath)
+                ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", "shared", "sample_pois.json"))
+                : overrideSharedPath;
+
+            Debug.Log("[POI] sharedPath=" + sharedPath);
+            Debug.Log("[POI] shared exists=" + File.Exists(sharedPath));
+
+            if (TryLoadFromFile(sharedPath, out var listFromFile))
             {
-                // Your JSON is { "pois": [...] } so parse into POIList wrapper
-                LoadedPOIs = JsonUtility.FromJson<POIList>(text.text) ?? new POIList();
+                LoadedPOIs = listFromFile;
+                Debug.Log($"[POI] Loaded {LoadedPOIs.pois.Count} POIs from shared file.");
                 return;
             }
 
-            // 2) Fallback to repo shared path (Editor convenience)
-            var sharedPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "shared", "sample_pois.json"));
-            if (File.Exists(sharedPath))
+            // 2) Resources fallback (Assets/Resources/sample_pois.json)
+            if (TryLoadFromResources(ResourcesPoisPath, out var listFromResources))
             {
-                var json = File.ReadAllText(sharedPath);
-                LoadedPOIs = JsonUtility.FromJson<POIList>(json) ?? new POIList();
+                LoadedPOIs = listFromResources;
+                Debug.Log($"[POI] Loaded {LoadedPOIs.pois.Count} POIs from Resources/{ResourcesPoisPath}.json");
                 return;
             }
 
-            // 3) Final fallback
-            Debug.LogWarning("sample_pois.json not found, loading fallback POIs.");
+            // 3) Hard fallback
+            Debug.LogWarning("[POI] Could not load sample_pois.json from shared/ or Resources. Using fallback POIs.");
             LoadedPOIs = new POIList
             {
                 pois = new List<POI>
@@ -56,15 +67,66 @@ namespace Worldrift.Client
             };
         }
 
+        private static bool TryLoadFromFile(string path, out POIList list)
+        {
+            list = null;
+
+            try
+            {
+                if (!File.Exists(path)) return false;
+
+                var json = File.ReadAllText(path);
+                if (string.IsNullOrWhiteSpace(json)) return false;
+
+                list = JsonUtility.FromJson<POIList>(json);
+                if (list == null || list.pois == null) return false;
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[POI] Failed to load from file: " + path + "\n" + e);
+                return false;
+            }
+        }
+
+        private static bool TryLoadFromResources(string resourcesPathNoExt, out POIList list)
+        {
+            list = null;
+
+            try
+            {
+                TextAsset asset = Resources.Load<TextAsset>(resourcesPathNoExt);
+                if (asset == null)
+                {
+                    Debug.Log("[POI] Resources.Load returned null for: " + resourcesPathNoExt);
+                    return false;
+                }
+
+                var json = asset.text;
+                if (string.IsNullOrWhiteSpace(json)) return false;
+
+                list = JsonUtility.FromJson<POIList>(json);
+                if (list == null || list.pois == null) return false;
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[POI] Failed to load from Resources: " + resourcesPathNoExt + "\n" + e);
+                return false;
+            }
+        }
 
         public List<POI> GetNearest(double lat, double lon, int max = 5)
         {
             var results = new List<POI>(LoadedPOIs.pois);
-            results.Sort((a, b) => DistanceMeters(lat, lon, a.lat, a.lon).CompareTo(DistanceMeters(lat, lon, b.lat, b.lon)));
+            results.Sort((a, b) => DistanceMeters(lat, lon, a.lat, a.lon)
+                .CompareTo(DistanceMeters(lat, lon, b.lat, b.lon)));
+
             if (results.Count > max)
-            {
                 results = results.GetRange(0, max);
-            }
+
             return results;
         }
 
@@ -80,9 +142,6 @@ namespace Worldrift.Client
             return radius * c;
         }
 
-        private static double DegreesToRadians(double degrees)
-        {
-            return degrees * (Math.PI / 180.0);
-        }
+        private static double DegreesToRadians(double degrees) => degrees * (Math.PI / 180.0);
     }
 }
