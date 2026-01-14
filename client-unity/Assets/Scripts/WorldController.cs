@@ -8,10 +8,18 @@ namespace Worldrift.Client
         [SerializeField] private GPSManager gpsManager;
         [SerializeField] private WorldPOIService poiService;
         [SerializeField] private SceneFlowController sceneFlow;
+        [SerializeField] private GeoLocalizer geoLocalizer;
+        [SerializeField] private WorldChunkRenderer chunkRenderer;
+        [SerializeField] private PlayerAvatar playerAvatar;
+        [SerializeField] private PortalMarker portalMarkerPrefab;
+        [SerializeField] private Transform portalParent;
+        [SerializeField] private int maxPortalMarkers = 5;
+        [SerializeField] private Color portalColor = new Color(0.7f, 0.2f, 0.9f, 1f);
 
         private AppConfig config;
         private GpsLocation lastLocation;
         private bool hasFirstLocation;
+        private readonly System.Collections.Generic.List<PortalMarker> portalMarkers = new System.Collections.Generic.List<PortalMarker>();
 
         private void Awake()
         {
@@ -27,6 +35,28 @@ namespace Worldrift.Client
             if (poiService != null)
             {
                 poiService.LoadPOIs();
+            }
+
+            if (geoLocalizer == null)
+            {
+                geoLocalizer = FindObjectOfType<GeoLocalizer>();
+            }
+
+            if (chunkRenderer == null)
+            {
+                chunkRenderer = FindObjectOfType<WorldChunkRenderer>();
+            }
+
+            if (playerAvatar == null)
+            {
+                playerAvatar = FindObjectOfType<PlayerAvatar>();
+            }
+
+            if (portalParent == null)
+            {
+                var parentObject = new GameObject("PortalMarkers");
+                parentObject.transform.SetParent(transform, false);
+                portalParent = parentObject.transform;
             }
 
             if (gpsManager != null)
@@ -99,6 +129,29 @@ namespace Worldrift.Client
             // Also show a quick “nearest” line (so you can verify flow immediately)
             var top1 = poiService.GetNearest(location.Latitude, location.Longitude, 1);
             uiController.SetStatus("Nearest: " + (top1.Count > 0 ? top1[0].name : "none"));
+
+            if (geoLocalizer != null)
+            {
+                bool originSet = geoLocalizer.TrySetOrigin(location.Latitude, location.Longitude);
+                if (originSet && chunkRenderer != null)
+                {
+                    int seedOffset = top1.Count > 0 ? top1[0].seed : 0;
+                    chunkRenderer.Initialize(location.Latitude, location.Longitude, seedOffset);
+                }
+
+                Vector2 playerWorld = geoLocalizer.LatLonToWorldUnits(location.Latitude, location.Longitude);
+                if (playerAvatar != null)
+                {
+                    playerAvatar.SetWorldPosition(playerWorld);
+                }
+
+                if (chunkRenderer != null)
+                {
+                    chunkRenderer.UpdateChunk(playerWorld);
+                }
+
+                UpdatePortalMarkers(nearest);
+            }
         }
 
         private void OnPoiSelected(POI poi)
@@ -126,6 +179,57 @@ namespace Worldrift.Client
             else
             {
                 uiController?.SetStatus($"Too far: {distance:0}m away");
+            }
+        }
+
+        private void UpdatePortalMarkers(System.Collections.Generic.List<POI> pois)
+        {
+            if (geoLocalizer == null)
+            {
+                return;
+            }
+
+            int count = pois != null ? Mathf.Min(pois.Count, maxPortalMarkers) : 0;
+            EnsurePortalMarkers(count);
+
+            for (int i = 0; i < count; i++)
+            {
+                var poi = pois[i];
+                var marker = portalMarkers[i];
+                Vector2 worldPosition = geoLocalizer.LatLonToWorldUnits(poi.lat, poi.lon);
+                marker.transform.position = new Vector3(worldPosition.x, worldPosition.y, 0f);
+                marker.Initialize(poi, poi.name, portalColor);
+                marker.gameObject.SetActive(true);
+            }
+
+            for (int i = count; i < portalMarkers.Count; i++)
+            {
+                portalMarkers[i].gameObject.SetActive(false);
+            }
+        }
+
+        private void EnsurePortalMarkers(int count)
+        {
+            while (portalMarkers.Count < count)
+            {
+                PortalMarker marker = null;
+                if (portalMarkerPrefab != null)
+                {
+                    marker = Instantiate(portalMarkerPrefab, portalParent);
+                }
+                else
+                {
+                    var markerObject = new GameObject($"PortalMarker_{portalMarkers.Count}");
+                    markerObject.transform.SetParent(portalParent, false);
+                    markerObject.AddComponent<SpriteRenderer>();
+                    marker = markerObject.AddComponent<PortalMarker>();
+                }
+
+                if (marker != null)
+                {
+                    marker.Clicked += OnPoiSelected;
+                    portalMarkers.Add(marker);
+                }
             }
         }
     }
